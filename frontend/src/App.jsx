@@ -13,14 +13,13 @@ import Receptionists from "./pages/Receptionists.jsx";
 import Appointments from "./pages/Appointments.jsx";
 import CalendarPage from "./pages/CalendarPage.jsx";
 import Consultations from "./pages/consultations.jsx";
-import Prescriptions from "./pages/Prescriptions.jsx";
-import Statistics from "./pages/Statistics.jsx";
+import Prescriptions from "./pages/prescriptions.jsx";
+import Statistics from "./pages/statistics.jsx";
 import Specialties from "./pages/Specialties.jsx";
-import Profile from "./pages/Profile.jsx";
-import Tickets from "./pages/Tickets.jsx";
+import Profile from "./pages/profile.jsx";
+import Tickets from "./pages/tickets.jsx";
 import Records from "./pages/Records.jsx";
 import Users from "./pages/Users.jsx";
-import BonConsultation from "./pages/Bonconsultation.jsx";
 function Private({ children }) {
   const { user } = useAuth();
 

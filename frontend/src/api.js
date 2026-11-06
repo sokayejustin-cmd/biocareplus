@@ -59,6 +59,19 @@ export function unwrap(data) {
   return data?.results || [];
 }
 
+// Récupère toutes les pages d'une liste paginée (PAGE_SIZE = 25 côté Django).
+export async function fetchAll(path) {
+  const sep = path.includes("?") ? "&" : "?";
+  const all = [];
+  for (let page = 1; page < 100; page++) {
+    const data = await api(`${path}${sep}page=${page}`);
+    if (Array.isArray(data)) return data;
+    all.push(...(data?.results || []));
+    if (!data?.next) break;
+  }
+  return all;
+}
+
 export async function downloadPdf(path, filename) {
   const blob = await api(path, { blob: true });
   const url = URL.createObjectURL(blob);

@@ -7,6 +7,7 @@ from django.db.models.functions import TruncMonth
 from django.http import FileResponse
 from django.utils import timezone
 from rest_framework import status, viewsets
+from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -170,6 +171,26 @@ class UserViewSet(viewsets.ModelViewSet):
         "role",
         "is_active",
     )
+
+    def perform_create(self, serializer):
+        # Les autres rôles ont besoin d'un profil (Doctor, Nurse...) : ils se créent
+        # depuis leurs pages dédiées.
+        if serializer.validated_data.get("role") != User.Role.ADMIN:
+            raise ValidationError(
+                {"role": "Seuls les comptes administrateur se créent ici. "
+                         "Utilisez les pages Docteurs, Infirmiers, Réceptionnistes ou Patients."}
+            )
+        serializer.save(must_change_password=True)
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        data = serializer.validated_data
+        if "role" in data and data["role"] != instance.role:
+            raise ValidationError({"role": "Le rôle d'un compte ne peut pas être modifié."})
+        if instance.id == self.request.user.id and data.get("is_active") is False:
+            raise ValidationError({"is_active": "Vous ne pouvez pas désactiver votre propre compte."})
+        extra = {"must_change_password": True} if data.get("password") else {}
+        serializer.save(**extra)
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -368,12 +389,11 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         patients = _patient_scope(self.request.user)
-        qs = MedicalRecord.objects.filter(patient__in=patients).select_related("patient__user")
-        if self.request.user.role == User.Role.RECEPTIONIST:
-            # Reception sees administrative identity, not full clinical notes in list —
-            # still allowed to open the dossier as specified.
-            return qs
-        return qs
+        return (
+            MedicalRecord.objects.filter(patient__in=patients)
+            .select_related("patient__user")
+            .order_by("patient__user__last_name", "patient__user__first_name", "id")
+        )
 
     def get_permissions(self):
         if self.request.method in ("GET", "HEAD"):

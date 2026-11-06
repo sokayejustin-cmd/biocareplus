@@ -244,14 +244,11 @@ class Command(BaseCommand):
         )
 
         ConsultationTicket.objects.get_or_create(
-            number=f"BC-{today.strftime('%Y%m%d')}-0001",
+            numero=f"BC-{today.strftime('%Y%m%d')}-0001",
             defaults={
                 "patient": p1,
                 "doctor": doctor,
-                "appointment": a1,
-                "date": a1.date,
-                "time": a1.time,
-                "reason": a1.reason,
+                "heure": a1.time,
             },
         )
 

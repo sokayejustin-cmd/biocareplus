@@ -517,11 +517,10 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "created_at",
         )
         read_only_fields = ("created_at",)
+        # Déduite du docteur dans validate() si absente.
+        extra_kwargs = {"specialty": {"required": False}}
 
     def validate(self, attrs):
-        instance = Appointment(**{**getattr(self, "initial_data", {}), **attrs})
-        if self.instance:
-            instance.pk = self.instance.pk
         doctor = attrs.get("doctor") or getattr(self.instance, "doctor", None)
         date = attrs.get("date") or getattr(self.instance, "date", None)
         time = attrs.get("time") or getattr(self.instance, "time", None)

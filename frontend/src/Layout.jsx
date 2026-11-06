@@ -49,7 +49,7 @@ const MENUS = {
 };
 
 export default function Layout() {
-  const { user, logout, toast } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const items = MENUS[user?.role] || [];
@@ -96,7 +96,6 @@ export default function Layout() {
           <Outlet />
         </div>
       </div>
-      {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
     </div>
   );
 }
