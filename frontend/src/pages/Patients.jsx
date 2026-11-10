@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, unwrap } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { Modal, confirmBox } from "../ui.jsx";
 
 const empty = {
@@ -250,8 +251,19 @@ export default function Patients({ create }) {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan="5" style={{ textAlign: "center" }}>
-                  Aucun patient trouvé.
+                <td colSpan="5">
+                  <EmptyState
+                    compact
+                    variant="patients"
+                    title="Aucun patient"
+                    description={
+                      q
+                        ? "Essayez une autre recherche."
+                        : canEdit
+                          ? "Ajoutez un patient pour commencer son suivi."
+                          : "Aucun patient n'est disponible pour le moment."
+                    }
+                  />
                 </td>
               </tr>
             ) : (

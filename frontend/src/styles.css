@@ -73,8 +73,18 @@
 }
 
 .admin-card-icon {
-  font-size: 30px;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: #e9f4f8;
+  color: var(--navy);
 }
+.admin-card-icon--doctors { background: #e5f3ed; color: #16704f; }
+.admin-card-icon--nurses { background: #fcebed; color: #b54758; }
+.admin-card-icon--appointments { background: #fff3df; color: #94620c; }
 
 .admin-card span {
   display: block;
@@ -114,7 +124,13 @@
 }
 
 .module-icon {
-  font-size: 32px;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: #e9f4f8;
+  color: var(--navy);
   margin-bottom: 12px;
 }
 
@@ -316,6 +332,20 @@ label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px
 .card, .stat, .admin-card, .admin-module {
   transition: transform var(--motion-fast) var(--motion-ease), box-shadow var(--motion-fast) var(--motion-ease);
 }
+.home-card-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: 13px;
+  background: #e9f4f8;
+  color: var(--navy);
+}
+.home-card-icon--professional {
+  background: var(--green-soft);
+  color: var(--green);
+}
 .card:not(.modal):hover, .stat:hover, .admin-card:hover, .admin-module:hover {
   transform: translateY(-2px);
   box-shadow: 0 14px 32px rgba(11, 95, 138, 0.12);
@@ -378,6 +408,70 @@ label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px
 .content { padding: 22px; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
 .stat { background: #fff; border-radius: var(--radius); padding: 16px; border: 1px solid var(--line); }
+.dashboard-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: 18px 22px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(110deg, #fff 58%, #e8f4f8 100%);
+}
+.dashboard-intro h1 { margin: 0 0 6px; }
+.dashboard-intro p { margin: 0; color: var(--muted); }
+.dashboard-intro__illustration {
+  display: block;
+  width: 168px;
+  aspect-ratio: 11 / 7;
+  flex: 0 0 168px;
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 24px;
+  color: var(--text);
+}
+.empty-state__illustration {
+  display: block;
+  width: 172px;
+  aspect-ratio: 11 / 7;
+  flex: 0 0 172px;
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+.empty-state__illustration svg { display: block; width: 100%; height: 100%; }
+.empty-state__content { max-width: 420px; }
+.empty-state h3 { margin: 0 0 6px; color: var(--navy-dark); }
+.empty-state p { margin: 0; color: var(--muted); line-height: 1.55; }
+.empty-state__action { margin-top: 16px; min-height: 44px; }
+.empty-state--compact { gap: 14px; padding: 10px 14px; min-height: 96px; }
+.empty-state--compact .empty-state__illustration { width: 104px; flex-basis: 104px; }
+.empty-state--compact .empty-state__content { max-width: 440px; }
+.empty-state--compact .empty-state__action { margin-top: 10px; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .empty-state:hover .empty-state__illustration,
+  .dashboard-intro:hover .dashboard-intro__illustration {
+    transform: translateY(-3px) rotate(1deg);
+  }
+}
+@media (max-width: 600px) {
+  .dashboard-intro { padding: 16px; }
+  .dashboard-intro__illustration { width: 112px; flex-basis: 112px; }
+  .empty-state:not(.empty-state--compact) {
+    flex-direction: column;
+    gap: 12px;
+    padding: 22px 14px;
+    text-align: center;
+  }
+  .empty-state:not(.empty-state--compact) .empty-state__illustration { width: 148px; flex-basis: auto; }
+  .empty-state--compact { gap: 10px; padding: 8px; }
+  .empty-state--compact .empty-state__illustration { width: 76px; flex-basis: 76px; }
+}
 .stat b { display: block; font-size: 28px; color: var(--navy); }
 .stat span { color: var(--muted); font-size: 13px; }
 

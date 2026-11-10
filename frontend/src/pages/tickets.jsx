@@ -1,5 +1,19 @@
 
 import { useEffect, useState } from "react";
+import {
+  Check,
+  Clock3,
+  Megaphone,
+  Plus,
+  Printer,
+  RefreshCw,
+  Stethoscope,
+  Ticket,
+  TicketPlus,
+  UsersRound,
+  X,
+} from "lucide-react";
+import EmptyState from "../components/EmptyState.jsx";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000/api";
@@ -620,7 +634,8 @@ function Tickets() {
             onClick={loadData}
             disabled={loading}
           >
-            🔄 Actualiser
+            <RefreshCw aria-hidden="true" size={16} />
+            Actualiser
           </button>
 
           <button
@@ -629,7 +644,8 @@ function Tickets() {
             onClick={callNext}
             disabled={loading || tickets.length === 0}
           >
-            📢 Appeler le prochain
+            <Megaphone aria-hidden="true" size={16} />
+            Appeler le prochain
           </button>
 
           <button
@@ -637,7 +653,8 @@ function Tickets() {
             className="btn primary"
             onClick={openForm}
           >
-            + Nouveau ticket
+            <Plus aria-hidden="true" size={16} />
+            Nouveau ticket
           </button>
 
         </div>
@@ -666,8 +683,8 @@ function Tickets() {
       <div className="ticket-info-grid">
 
         <div className="card ticket-info-card">
-          <div className="ticket-info-icon">
-            👥
+          <div className="ticket-info-icon ticket-info-icon--patients">
+            <UsersRound aria-hidden="true" size={22} strokeWidth={1.8} />
           </div>
 
           <div>
@@ -677,8 +694,8 @@ function Tickets() {
         </div>
 
         <div className="card ticket-info-card">
-          <div className="ticket-info-icon">
-            👨‍⚕️
+          <div className="ticket-info-icon ticket-info-icon--doctors">
+            <Stethoscope aria-hidden="true" size={22} strokeWidth={1.8} />
           </div>
 
           <div>
@@ -688,8 +705,8 @@ function Tickets() {
         </div>
 
         <div className="card ticket-info-card">
-          <div className="ticket-info-icon">
-            🎫
+          <div className="ticket-info-icon ticket-info-icon--tickets">
+            <Ticket aria-hidden="true" size={22} strokeWidth={1.8} />
           </div>
 
           <div>
@@ -699,8 +716,8 @@ function Tickets() {
         </div>
 
         <div className="card ticket-info-card">
-          <div className="ticket-info-icon">
-            ⏳
+          <div className="ticket-info-icon ticket-info-icon--waiting">
+            <Clock3 aria-hidden="true" size={22} strokeWidth={1.8} />
           </div>
 
           <div>
@@ -923,7 +940,12 @@ function Tickets() {
               >
                 {saving
                   ? "Création..."
-                  : "🎫 Créer le ticket"}
+                  : (
+                    <>
+                      <TicketPlus aria-hidden="true" size={16} />
+                      Créer le ticket
+                    </>
+                  )}
               </button>
 
             </div>
@@ -969,30 +991,13 @@ function Tickets() {
 
         ) : tickets.length === 0 ? (
 
-          <div className="ticket-empty">
-
-            <div className="empty-icon">
-              🎫
-            </div>
-
-            <h3>
-              Aucun ticket
-            </h3>
-
-            <p>
-              Aucun bon de consultation n'a encore
-              été créé.
-            </p>
-
-            <button
-              type="button"
-              className="btn primary"
-              onClick={openForm}
-            >
-              + Créer le premier ticket
-            </button>
-
-          </div>
+          <EmptyState
+            variant="tickets"
+            title="Aucun ticket"
+            description="Aucun bon de consultation n'a encore été créé."
+            actionLabel="Créer le premier ticket"
+            onAction={openForm}
+          />
 
         ) : (
 
@@ -1105,7 +1110,8 @@ function Tickets() {
                               )
                             }
                           >
-                            📢 Appeler
+                            <Megaphone aria-hidden="true" size={14} />
+                            Appeler
                           </button>
                         )}
 
@@ -1121,7 +1127,8 @@ function Tickets() {
                               )
                             }
                           >
-                            ✓ Terminer
+                            <Check aria-hidden="true" size={14} />
+                            Terminer
                           </button>
                         )}
 
@@ -1139,7 +1146,8 @@ function Tickets() {
                               )
                             }
                           >
-                            ✕ Annuler
+                            <X aria-hidden="true" size={14} />
+                            Annuler
                           </button>
                         )}
 
@@ -1150,7 +1158,8 @@ function Tickets() {
                             printTicket(ticket)
                           }
                         >
-                          🖨️ Imprimer
+                        <Printer aria-hidden="true" size={14} />
+                        Imprimer
                         </button>
 
                       </div>
@@ -1249,9 +1258,25 @@ function Tickets() {
           display: flex;
           align-items: center;
           justify-content: center;
+          flex: 0 0 auto;
           border-radius: 10px;
-          background: #f3f4f6;
-          font-size: 22px;
+          background: #e9f4f8;
+          color: var(--navy);
+        }
+
+        .ticket-info-icon--doctors {
+          background: #e5f3ed;
+          color: #16704f;
+        }
+
+        .ticket-info-icon--tickets {
+          background: #eef0fd;
+          color: #5253a3;
+        }
+
+        .ticket-info-icon--waiting {
+          background: #fff3df;
+          color: #94620c;
         }
 
         .ticket-info-card strong {
@@ -1412,25 +1437,6 @@ function Tickets() {
           to {
             transform: rotate(360deg);
           }
-        }
-
-        .ticket-empty {
-          text-align: center;
-          padding: 60px 20px;
-        }
-
-        .empty-icon {
-          font-size: 45px;
-          margin-bottom: 15px;
-        }
-
-        .ticket-empty h3 {
-          margin: 0 0 8px;
-        }
-
-        .ticket-empty p {
-          color: #6b7280;
-          margin-bottom: 20px;
         }
 
         .table-container {

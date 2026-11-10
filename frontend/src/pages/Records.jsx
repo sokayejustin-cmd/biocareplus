@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, fetchAll } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { Modal } from "../ui.jsx";
 
 const FIELDS = [
@@ -77,7 +78,15 @@ export default function Records() {
       <div>
         <h1>Mon dossier médical</h1>
         <div className="card">
-          {records[0] ? <RecordView record={records[0]} /> : <p>Aucun dossier disponible.</p>}
+          {records[0] ? (
+            <RecordView record={records[0]} />
+          ) : (
+            <EmptyState
+              variant="records"
+              title="Votre dossier n'est pas encore disponible"
+              description="Contactez l'accueil de BIO CARE PLUS pour obtenir de l'aide."
+            />
+          )}
         </div>
       </div>
     );
@@ -100,7 +109,20 @@ export default function Records() {
           </thead>
           <tbody>
             {shown.length === 0 ? (
-              <tr><td colSpan={5}>Aucun dossier.</td></tr>
+              <tr>
+                <td colSpan={5}>
+                  <EmptyState
+                    compact
+                    variant="records"
+                    title="Aucun dossier médical"
+                    description={
+                      search
+                        ? "Essayez une autre recherche."
+                        : "Les dossiers des patients apparaîtront ici."
+                    }
+                  />
+                </td>
+              </tr>
             ) : (
               shown.map((r) => (
                 <tr key={r.id}>

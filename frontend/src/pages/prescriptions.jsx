@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, unwrap } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { Modal, confirmBox } from "../ui.jsx";
 
 const emptyItem = () => ({
@@ -469,15 +470,15 @@ export default function Prescriptions({ create = false }) {
             Chargement des ordonnances...
           </div>
         ) : filteredRows.length === 0 ? (
-          <div style={{ padding: 30, textAlign: "center" }}>
-            <h3>Aucune ordonnance</h3>
-
-            <p>
-              {q
-                ? "Aucune ordonnance ne correspond à votre recherche."
-                : "Aucune ordonnance n'a encore été enregistrée."}
-            </p>
-          </div>
+          <EmptyState
+            variant="prescriptions"
+            title="Aucune ordonnance"
+            description={
+              q
+                ? "Aucune ordonnance ne correspond à votre recherche. Essayez un autre terme."
+                : "Les prescriptions médicales apparaîtront ici après leur enregistrement."
+            }
+          />
         ) : (
           <div
             style={{

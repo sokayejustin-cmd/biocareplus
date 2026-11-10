@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, unwrap } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { Modal, confirmBox } from "../ui.jsx";
 
 export default function Doctors() {
@@ -52,7 +53,18 @@ export default function Doctors() {
             <tr><th>Nom</th><th>Spécialité</th><th>Identifiant</th><th>Actif</th><th></th></tr>
           </thead>
           <tbody>
-            {rows.map((d) => (
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={5}>
+                  <EmptyState
+                    compact
+                    variant="team"
+                    title="Aucun docteur"
+                    description="Ajoutez un docteur pour compléter l'équipe médicale."
+                  />
+                </td>
+              </tr>
+            ) : rows.map((d) => (
               <tr key={d.id}>
                 <td>Dr {d.user.first_name} {d.user.last_name}</td>
                 <td>{d.specialty_name}</td>

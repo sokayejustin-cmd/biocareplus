@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, fetchAll } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { Modal, confirmBox } from "../ui.jsx";
 
 const EMPTY = { name: "", description: "", is_active: true };
@@ -80,7 +81,20 @@ export default function Specialties() {
             {loading ? (
               <tr><td colSpan={4}>Chargement...</td></tr>
             ) : shown.length === 0 ? (
-              <tr><td colSpan={4}>Aucune spécialité.</td></tr>
+              <tr>
+                <td colSpan={4}>
+                  <EmptyState
+                    compact
+                    variant="records"
+                    title="Aucune spécialité"
+                    description={
+                      search
+                        ? "Essayez une autre recherche."
+                        : "Ajoutez une spécialité pour préciser les parcours de soins."
+                    }
+                  />
+                </td>
+              </tr>
             ) : (
               shown.map((s) => (
                 <tr key={s.id}>

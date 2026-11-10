@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, fetchAll } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { Modal, confirmBox } from "../ui.jsx";
 
 const ROLE_LABELS = {
@@ -137,7 +138,20 @@ export default function Users() {
             {loading ? (
               <tr><td colSpan={7}>Chargement...</td></tr>
             ) : shown.length === 0 ? (
-              <tr><td colSpan={7}>Aucun utilisateur trouvé.</td></tr>
+              <tr>
+                <td colSpan={7}>
+                  <EmptyState
+                    compact
+                    variant="team"
+                    title="Aucun utilisateur"
+                    description={
+                      search || role || status
+                        ? "Modifiez vos filtres ou votre recherche."
+                        : "Les comptes de l'équipe apparaîtront ici."
+                    }
+                  />
+                </td>
+              </tr>
             ) : (
               shown.map((u) => (
                 <tr key={u.id}>

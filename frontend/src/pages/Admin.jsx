@@ -1,4 +1,14 @@
+import {
+  BriefcaseMedical,
+  CalendarDays,
+  ChartNoAxesCombined,
+  HeartPulse,
+  Hospital,
+  Stethoscope,
+  UsersRound,
+} from "lucide-react";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 
 export default function Admin() {
   const { user } = useAuth();
@@ -25,7 +35,9 @@ export default function Admin() {
       <div className="admin-stats">
 
         <div className="admin-card">
-          <div className="admin-card-icon">👥</div>
+          <div className="admin-card-icon admin-card-icon--users">
+            <UsersRound aria-hidden="true" size={26} strokeWidth={1.8} />
+          </div>
           <div>
             <span>Utilisateurs</span>
             <strong>0</strong>
@@ -33,7 +45,9 @@ export default function Admin() {
         </div>
 
         <div className="admin-card">
-          <div className="admin-card-icon">👨‍⚕️</div>
+          <div className="admin-card-icon admin-card-icon--doctors">
+            <Stethoscope aria-hidden="true" size={26} strokeWidth={1.8} />
+          </div>
           <div>
             <span>Docteurs</span>
             <strong>0</strong>
@@ -41,7 +55,9 @@ export default function Admin() {
         </div>
 
         <div className="admin-card">
-          <div className="admin-card-icon">👩‍⚕️</div>
+          <div className="admin-card-icon admin-card-icon--nurses">
+            <HeartPulse aria-hidden="true" size={26} strokeWidth={1.8} />
+          </div>
           <div>
             <span>Infirmiers</span>
             <strong>0</strong>
@@ -49,7 +65,9 @@ export default function Admin() {
         </div>
 
         <div className="admin-card">
-          <div className="admin-card-icon">📅</div>
+          <div className="admin-card-icon admin-card-icon--appointments">
+            <CalendarDays aria-hidden="true" size={26} strokeWidth={1.8} />
+          </div>
           <div>
             <span>Rendez-vous</span>
             <strong>0</strong>
@@ -64,7 +82,9 @@ export default function Admin() {
         <div className="admin-grid">
 
           <div className="admin-module">
-            <div className="module-icon">👥</div>
+            <div className="module-icon">
+              <UsersRound aria-hidden="true" size={28} strokeWidth={1.8} />
+            </div>
             <h3>Utilisateurs</h3>
             <p>
               Gérer les comptes et les accès des utilisateurs.
@@ -73,7 +93,9 @@ export default function Admin() {
           </div>
 
           <div className="admin-module">
-            <div className="module-icon">👨‍⚕️</div>
+            <div className="module-icon">
+              <Stethoscope aria-hidden="true" size={28} strokeWidth={1.8} />
+            </div>
             <h3>Docteurs</h3>
             <p>
               Ajouter, modifier et gérer les médecins.
@@ -82,7 +104,9 @@ export default function Admin() {
           </div>
 
           <div className="admin-module">
-            <div className="module-icon">👩‍⚕️</div>
+            <div className="module-icon">
+              <HeartPulse aria-hidden="true" size={28} strokeWidth={1.8} />
+            </div>
             <h3>Infirmiers</h3>
             <p>
               Administrer les infirmiers de l'établissement.
@@ -91,7 +115,9 @@ export default function Admin() {
           </div>
 
           <div className="admin-module">
-            <div className="module-icon">🧑‍💼</div>
+            <div className="module-icon">
+              <BriefcaseMedical aria-hidden="true" size={28} strokeWidth={1.8} />
+            </div>
             <h3>Réceptionnistes</h3>
             <p>
               Gérer les comptes des réceptionnistes.
@@ -100,7 +126,9 @@ export default function Admin() {
           </div>
 
           <div className="admin-module">
-            <div className="module-icon">🏥</div>
+            <div className="module-icon">
+              <Hospital aria-hidden="true" size={28} strokeWidth={1.8} />
+            </div>
             <h3>Spécialités</h3>
             <p>
               Administrer les spécialités médicales.
@@ -109,7 +137,9 @@ export default function Admin() {
           </div>
 
           <div className="admin-module">
-            <div className="module-icon">📊</div>
+            <div className="module-icon">
+              <ChartNoAxesCombined aria-hidden="true" size={28} strokeWidth={1.8} />
+            </div>
             <h3>Statistiques</h3>
             <p>
               Consulter les statistiques générales du système.
@@ -124,7 +154,12 @@ export default function Admin() {
         <h2>Activité récente</h2>
 
         <div className="admin-activity">
-          <p>Aucune activité récente.</p>
+          <EmptyState
+            compact
+            variant="activity"
+            title="Aucune activité récente"
+            description="Les actions récentes de l'équipe apparaîtront ici."
+          />
         </div>
       </section>
 

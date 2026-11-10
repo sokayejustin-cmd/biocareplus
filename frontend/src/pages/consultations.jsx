@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, unwrap } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { Modal, confirmBox } from "../ui.jsx";
 
 const emptyForm = {
@@ -496,20 +497,15 @@ export default function Consultations({ create = false }) {
             Chargement des consultations...
           </div>
         ) : filteredRows.length === 0 ? (
-          <div
-            style={{
-              padding: 30,
-              textAlign: "center",
-            }}
-          >
-            <h3>Aucune consultation</h3>
-
-            <p>
-              {q
-                ? "Aucune consultation ne correspond à votre recherche."
-                : "Aucune consultation n'a encore été enregistrée."}
-            </p>
-          </div>
+          <EmptyState
+            variant="prescriptions"
+            title="Aucune consultation"
+            description={
+              q
+                ? "Aucune consultation ne correspond à votre recherche. Essayez un autre terme."
+                : "Les consultations enregistrées apparaîtront ici."
+            }
+          />
         ) : (
           <div
             style={{

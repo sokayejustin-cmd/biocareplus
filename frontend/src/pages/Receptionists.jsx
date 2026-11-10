@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, unwrap } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { Modal, confirmBox } from "../ui.jsx";
 
 export default function Receptionists() {
@@ -22,7 +23,18 @@ export default function Receptionists() {
         <table>
           <thead><tr><th>Nom</th><th>Bureau</th><th>Identifiant</th><th></th></tr></thead>
           <tbody>
-            {rows.map((r) => (
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={4}>
+                  <EmptyState
+                    compact
+                    variant="team"
+                    title="Aucun réceptionniste"
+                    description="Ajoutez un réceptionniste pour gérer l'accueil."
+                  />
+                </td>
+              </tr>
+            ) : rows.map((r) => (
               <tr key={r.id}>
                 <td>{r.user.first_name} {r.user.last_name}</td>
                 <td>{r.desk}</td>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, unwrap } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { Modal, confirmBox } from "../ui.jsx";
 
 export default function Nurses() {
@@ -42,7 +43,18 @@ export default function Nurses() {
         <table>
           <thead><tr><th>Nom</th><th>Service</th><th>Identifiant</th><th></th></tr></thead>
           <tbody>
-            {rows.map((n) => (
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={4}>
+                  <EmptyState
+                    compact
+                    variant="team"
+                    title="Aucun infirmier"
+                    description="Ajoutez un infirmier pour compléter l'équipe de soins."
+                  />
+                </td>
+              </tr>
+            ) : rows.map((n) => (
               <tr key={n.id}>
                 <td>{n.user.first_name} {n.user.last_name}</td>
                 <td>{n.department}</td>

@@ -2,6 +2,16 @@
 
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  CalendarDays,
+  ClipboardCheck,
+  FileText,
+  HeartHandshake,
+  HeartPulse,
+  ShieldCheck,
+  Stethoscope,
+  UserRound,
+} from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { api } from "../api.js";
 import { motionTokens } from "../motion/motion-tokens.js";
@@ -83,14 +93,33 @@ export default function Home() {
         <h2>Services proposés</h2>
         <div className="cards">
           {[
-            ["Médecine générale", "Consultations, prévention et suivi au long cours."],
-            ["Spécialités", "Cardiologie, pédiatrie, dermatologie et plus."],
-            ["Parcours patient", "Rendez-vous, bons de consultation, dossiers."],
-            ["Ordonnances", "Prescriptions claires, imprimables au format PDF."],
-          ].map(([t, d]) => (
-            <article className="card home-card" key={t}>
-              <h3>{t}</h3>
-              <p>{d}</p>
+            {
+              title: "Médecine générale",
+              description: "Consultations, prévention et suivi au long cours.",
+              icon: Stethoscope,
+            },
+            {
+              title: "Spécialités",
+              description: "Cardiologie, pédiatrie, dermatologie et plus.",
+              icon: HeartPulse,
+            },
+            {
+              title: "Parcours patient",
+              description: "Rendez-vous, bons de consultation, dossiers.",
+              icon: CalendarDays,
+            },
+            {
+              title: "Ordonnances",
+              description: "Prescriptions claires, imprimables au format PDF.",
+              icon: FileText,
+            },
+          ].map(({ title, description, icon: Icon }) => (
+            <article className="card home-card" key={title}>
+              <span className="home-card-icon" aria-hidden="true">
+                <Icon size={22} strokeWidth={1.8} />
+              </span>
+              <h3>{title}</h3>
+              <p>{description}</p>
             </article>
           ))}
         </div>
@@ -100,6 +129,9 @@ export default function Home() {
         <div className="cards">
           {(info?.professionals || []).map((p) => (
             <article className="card home-card" key={p.id}>
+              <span className="home-card-icon home-card-icon--professional" aria-hidden="true">
+                <UserRound size={22} strokeWidth={1.8} />
+              </span>
               <h3>Dr {p.name}</h3>
               <span className="badge">{p.specialty}</span>
               <p>{p.bio}</p>
@@ -114,14 +146,23 @@ export default function Home() {
         <h2>Pourquoi BIO CARE PLUS ?</h2>
         <div className="cards">
           <article className="card home-card">
+            <span className="home-card-icon" aria-hidden="true">
+              <ShieldCheck size={22} strokeWidth={1.8} />
+            </span>
             <h3>Sécurité</h3>
             <p>Accès par rôle, mots de passe hashés, API authentifiée JWT.</p>
           </article>
           <article className="card home-card">
+            <span className="home-card-icon" aria-hidden="true">
+              <ClipboardCheck size={22} strokeWidth={1.8} />
+            </span>
             <h3>Clarté</h3>
             <p>Un dossier unique par patient, un calendrier par praticien.</p>
           </article>
           <article className="card home-card">
+            <span className="home-card-icon" aria-hidden="true">
+              <HeartHandshake size={22} strokeWidth={1.8} />
+            </span>
             <h3>Proximité</h3>
             <p>Une équipe disponible, un accueil humain, un suivi continu.</p>
           </article>

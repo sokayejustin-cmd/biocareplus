@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, unwrap } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { Modal, confirmBox } from "../ui.jsx";
 
 const empty = {
@@ -346,11 +347,17 @@ export default function Appointments({ create }) {
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td
-                  colSpan="8"
-                  style={{ textAlign: "center" }}
-                >
-                  Aucun rendez-vous trouvé.
+                <td colSpan="8">
+                  <EmptyState
+                    compact
+                    variant="appointments"
+                    title="Aucun rendez-vous"
+                    description={
+                      q
+                        ? "Essayez une autre recherche."
+                        : "Les rendez-vous à venir apparaîtront ici."
+                    }
+                  />
                 </td>
               </tr>
             ) : (

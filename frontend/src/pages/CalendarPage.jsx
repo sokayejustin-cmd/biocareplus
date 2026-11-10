@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { fetchAll } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 
 const DAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 const STATUS_CLASS = { cancelled: "danger", waiting: "warn", scheduled: "warn" };
@@ -106,7 +107,12 @@ export default function CalendarPage() {
           {new Date(selected + "T00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
         </h3>
         {dayList.length === 0 ? (
-          <p style={{ color: "var(--muted)" }}>Aucun rendez-vous.</p>
+          <EmptyState
+            compact
+            variant="calendar"
+            title="Aucun rendez-vous ce jour"
+            description="Sélectionnez une autre date pour consulter le planning."
+          />
         ) : (
           <div className="table-wrap">
             <table>
