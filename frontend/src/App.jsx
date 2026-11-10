@@ -1,7 +1,9 @@
 import Admin from "./pages/Admin.jsx";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useAuth } from "./auth.jsx";
 import Layout from "./Layout.jsx";
+import AnimatedToast from "./motion/AnimatedToast.jsx";
+import RouteFrame from "./motion/RouteFrame.jsx";
 import Home from "./pages/Home.jsx";
 import Login from "./pages/Login.jsx";
 import ResetPassword from "./pages/ResetPassword.jsx";
@@ -42,16 +44,14 @@ function RoleRoute({ roles, children }) {
 
 export default function App() {
   const { toast } = useAuth();
+  const location = useLocation();
 
   return (
     <>
-      {toast && (
-        <div className={`toast ${toast.type}`}>
-          {toast.message}
-        </div>
-      )}
+      <AnimatedToast toast={toast} />
 
-      <Routes>
+      <RouteFrame pathname={location.pathname}>
+        <Routes location={location}>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -164,7 +164,8 @@ export default function App() {
           />
           <Route path="records" element={<Records />} />
         </Route>
-      </Routes>
+        </Routes>
+      </RouteFrame>
     </>
   );
 }
