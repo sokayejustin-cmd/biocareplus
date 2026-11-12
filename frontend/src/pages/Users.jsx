@@ -1,6 +1,22 @@
 import { useEffect, useState } from "react";
+import { api, unwrap } from "../api.js";
+import { useAuth } from "../auth.jsx";
+import { Modal } from "../ui.jsx";
 
-const API_URL = "http://127.0.0.1:8000/api";
+const EDITABLE_FIELDS = ["first_name", "last_name", "email", "phone", "is_active"];
+
+function errorMessage(err) {
+  const payload = err?.payload;
+  if (payload && typeof payload === "object") {
+    const msgs = Object.entries(payload).map(([field, value]) =>
+      field === "detail"
+        ? String(value)
+        : `${field} : ${Array.isArray(value) ? value.join(" ") : value}`
+    );
+    if (msgs.length) return msgs.join(" — ");
+  }
+  return "La modification a échoué.";
+}
 
 const ROLE_LABELS = {
   admin: "Administrateur",
@@ -14,6 +30,46 @@ export default function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const { user: currentUser, notify } = useAuth();
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({});
+  const [saving, setSaving] = useState(false);
+
+  function openEdit(user) {
+    const initial = { password: "" };
+    EDITABLE_FIELDS.forEach((f) => {
+      initial[f] = user[f] ?? (f === "is_active" ? true : "");
+    });
+    setForm(initial);
+    setEditing(user);
+  }
+
+  async function saveEdit(e) {
+    e.preventDefault();
+    const body = {};
+    EDITABLE_FIELDS.forEach((f) => {
+      body[f] = form[f];
+    });
+    if (form.password) body.password = form.password;
+
+    setSaving(true);
+    try {
+      await api(`/users/${editing.id}/`, { method: "PATCH", body });
+      notify("success", "Utilisateur mis à jour.");
+      setEditing(null);
+      loadUsers();
+    } catch (err) {
+      notify("error", errorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const set = (field) => (e) =>
+    setForm({
+      ...form,
+      [field]: e.target.type === "checkbox" ? e.target.checked : e.target.value,
+    });
 
   useEffect(() => {
     loadUsers();
@@ -21,21 +77,8 @@ export default function Users() {
 
   async function loadUsers() {
     try {
-      const token = localStorage.getItem("access");
-
-      const response = await fetch(`${API_URL}/users/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Impossible de récupérer les utilisateurs");
-      }
-
-      const data = await response.json();
-
-      setUsers(data.results || data);
+      const data = await api("/users/");
+      setUsers(unwrap(data));
     } catch (error) {
       console.error(error);
     } finally {
@@ -119,7 +162,11 @@ export default function Users() {
                     </td>
 
                     <td>
-                      <button className="btn secondary">
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={() => openEdit(user)}
+                      >
                         Modifier
                       </button>
                     </td>
@@ -130,6 +177,68 @@ export default function Users() {
           </div>
         )}
       </div>
+
+      {editing && (
+        <Modal
+          title={`Modifier @${editing.username}`}
+          onClose={() => setEditing(null)}
+        >
+          <form onSubmit={saveEdit}>
+            <div className="grid-2">
+              <div className="field">
+                <label>Prénom</label>
+                <input className="input" value={form.first_name} onChange={set("first_name")} />
+              </div>
+              <div className="field">
+                <label>Nom</label>
+                <input className="input" value={form.last_name} onChange={set("last_name")} />
+              </div>
+              <div className="field">
+                <label>Email</label>
+                <input className="input" type="email" value={form.email} onChange={set("email")} />
+              </div>
+              <div className="field">
+                <label>Téléphone</label>
+                <input className="input" value={form.phone} onChange={set("phone")} />
+              </div>
+              <div className="field">
+                <label>Rôle</label>
+                <input className="input" value={ROLE_LABELS[editing.role] || editing.role} disabled />
+              </div>
+              <div className="field">
+                <label>Nouveau mot de passe</label>
+                <input
+                  className="input"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Laisser vide pour ne pas changer"
+                  value={form.password}
+                  onChange={set("password")}
+                />
+              </div>
+            </div>
+
+            <div className="field">
+              <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <input
+                  type="checkbox"
+                  checked={form.is_active}
+                  onChange={set("is_active")}
+                  disabled={editing.id === currentUser?.id}
+                />
+                Compte actif
+                {editing.id === currentUser?.id && (
+                  <small>(vous ne pouvez pas désactiver votre propre compte)</small>
+                )}
+              </label>
+            </div>
+
+            <button className="btn" disabled={saving}>
+              {saving ? "Enregistrement…" : "Enregistrer"}
+            </button>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 }

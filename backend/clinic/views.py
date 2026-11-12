@@ -8,6 +8,7 @@ from django.http import FileResponse
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -23,6 +24,7 @@ from .models import (
     Notification,
     Patient,
     Prescription,
+    PrescriptionItem,
     Receptionist,
     Specialty,
     User,
@@ -170,6 +172,16 @@ class UserViewSet(viewsets.ModelViewSet):
         "role",
         "is_active",
     )
+
+    def perform_update(self, serializer):
+        if (
+            serializer.instance.id == self.request.user.id
+            and serializer.validated_data.get("is_active") is False
+        ):
+            raise ValidationError(
+                {"detail": "Vous ne pouvez pas désactiver votre propre compte."}
+            )
+        serializer.save()
 
     def destroy(self, request, *args, **kwargs):
         """
@@ -678,71 +690,154 @@ def dashboard_stats(request):
 @api_view(["GET"])
 @permission_classes([IsAdmin])
 def admin_analytics(request):
-    patients_by_month = (
-        Patient.objects
-        .annotate(month=TruncMonth("created_at"))
-        .values("month")
-        .annotate(total=Count("id"))
-        .order_by("month")
-    )
+    today = date.today()
+    try:
+        months = max(1, min(int(request.query_params.get("months", 12)), 36))
+    except ValueError:
+        months = 12
 
-    consultations_by_doctor = (
-        Consultation.objects
-        .values(
-            "doctor__user__first_name",
-            "doctor__user__last_name",
+    # Liste des N derniers mois (1er jour), du plus ancien au plus récent.
+    month_starts = []
+    y, m = today.year, today.month
+    for _ in range(months):
+        month_starts.append(date(y, m, 1))
+        m -= 1
+        if m == 0:
+            y, m = y - 1, 12
+    month_starts.reverse()
+    since = month_starts[0]
+
+    def monthly(qs, field):
+        rows = (
+            qs.annotate(month=TruncMonth(field))
+            .values("month")
+            .annotate(total=Count("id"))
+        )
+        counts = {}
+        for r in rows:
+            mo = r["month"]
+            if mo is None:
+                continue
+            if hasattr(mo, "date"):
+                mo = mo.date()
+            counts[(mo.year, mo.month)] = r["total"]
+        return [counts.get((d.year, d.month), 0) for d in month_starts]
+
+    patients_m = monthly(
+        Patient.objects.filter(created_at__date__gte=since), "created_at"
+    )
+    appointments_m = monthly(Appointment.objects.filter(date__gte=since), "date")
+    consultations_m = monthly(Consultation.objects.filter(date__gte=since), "date")
+    prescriptions_m = monthly(Prescription.objects.filter(date__gte=since), "date")
+    activity_by_month = [
+        {
+            "month": d.isoformat(),
+            "patients": patients_m[i],
+            "appointments": appointments_m[i],
+            "consultations": consultations_m[i],
+            "prescriptions": prescriptions_m[i],
+        }
+        for i, d in enumerate(month_starts)
+    ]
+
+    consultations_by_doctor = [
+        {
+            "doctor": f"Dr {r['doctor__user__first_name']} {r['doctor__user__last_name']}".strip(),
+            "total": r["total"],
+        }
+        for r in Consultation.objects.values(
+            "doctor__user__first_name", "doctor__user__last_name"
         )
         .annotate(total=Count("id"))
-        .order_by("-total")
-    )
+        .order_by("-total")[:10]
+    ]
 
-    appointments_by_status = (
-        Appointment.objects
-        .values("status")
+    status_labels = dict(Appointment.Status.choices)
+    appointments_by_status = [
+        {"status": r["status"], "label": status_labels.get(r["status"], r["status"]), "total": r["total"]}
+        for r in Appointment.objects.values("status").annotate(total=Count("id")).order_by("-total")
+    ]
+
+    appointments_by_specialty = [
+        {"specialty": r["specialty__name"], "total": r["total"]}
+        for r in Appointment.objects.exclude(status=Appointment.Status.CANCELLED)
+        .values("specialty__name")
         .annotate(total=Count("id"))
-    )
+        .order_by("-total")
+    ]
+
+    weekday_names = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"]
+    weekday_counts = [0] * 7
+    for d in Appointment.objects.exclude(
+        status=Appointment.Status.CANCELLED
+    ).values_list("date", flat=True):
+        weekday_counts[d.weekday()] += 1
+    appointments_by_weekday = [
+        {"day": weekday_names[i], "total": weekday_counts[i]} for i in range(7)
+    ]
+
+    sex_labels = dict(Patient.Sex.choices)
+    patients_by_sex = [
+        {"sex": sex_labels.get(r["sex"], "Non renseigné"), "total": r["total"]}
+        for r in Patient.objects.values("sex").annotate(total=Count("id"))
+    ]
+
+    age_buckets = [
+        ("0-17", 0, 17), ("18-29", 18, 29), ("30-44", 30, 44),
+        ("45-59", 45, 59), ("60-74", 60, 74), ("75+", 75, 200),
+    ]
+    age_counts = {label: 0 for label, _, _ in age_buckets}
+    unknown_age = 0
+    for dob in Patient.objects.values_list("date_of_birth", flat=True):
+        if not dob:
+            unknown_age += 1
+            continue
+        age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
+        for label, lo, hi in age_buckets:
+            if lo <= age <= hi:
+                age_counts[label] += 1
+                break
+    patients_by_age = [{"range": k, "total": v} for k, v in age_counts.items()]
+
+    ticket_labels = dict(ConsultationTicket.STATUS_CHOICES)
+    tickets_by_status = [
+        {"status": ticket_labels.get(r["statut"], r["statut"]), "total": r["total"]}
+        for r in ConsultationTicket.objects.values("statut").annotate(total=Count("id"))
+    ]
+
+    top_medications = [
+        {"medication": r["medication"], "total": r["total"]}
+        for r in PrescriptionItem.objects.values("medication")
+        .annotate(total=Count("id"))
+        .order_by("-total")[:8]
+    ]
+
+    appointments_total = Appointment.objects.count()
+    cancelled = Appointment.objects.filter(status=Appointment.Status.CANCELLED).count()
+    completed = Appointment.objects.filter(status=Appointment.Status.COMPLETED).count()
 
     return Response({
         "users_total": User.objects.count(),
         "patients_total": Patient.objects.count(),
-        "doctors_total": Doctor.objects.filter(
-            is_active=True
-        ).count(),
-        "nurses_total": Nurse.objects.filter(
-            is_active=True
-        ).count(),
-        "receptionists_total": Receptionist.objects.filter(
-            is_active=True
-        ).count(),
-
+        "doctors_total": Doctor.objects.filter(is_active=True).count(),
+        "nurses_total": Nurse.objects.filter(is_active=True).count(),
+        "receptionists_total": Receptionist.objects.filter(is_active=True).count(),
         "consultations_total": Consultation.objects.count(),
-        "appointments_total": Appointment.objects.count(),
+        "appointments_total": appointments_total,
         "prescriptions_total": Prescription.objects.count(),
-
-        "patients_by_month": list(patients_by_month),
-        "consultations_by_doctor": list(consultations_by_doctor),
-        "appointments_by_status": list(appointments_by_status),
+        "cancellation_rate": round(100 * cancelled / appointments_total, 1) if appointments_total else 0,
+        "completion_rate": round(100 * completed / appointments_total, 1) if appointments_total else 0,
+        "unknown_age": unknown_age,
+        "activity_by_month": activity_by_month,
+        "consultations_by_doctor": consultations_by_doctor,
+        "appointments_by_status": appointments_by_status,
+        "appointments_by_specialty": appointments_by_specialty,
+        "appointments_by_weekday": appointments_by_weekday,
+        "patients_by_sex": patients_by_sex,
+        "patients_by_age": patients_by_age,
+        "tickets_by_status": tickets_by_status,
+        "top_medications": top_medications,
     })
-    consultations_by_doctor = (
-        Consultation.objects.values(
-            "doctor__user__first_name", "doctor__user__last_name"
-        )
-        .annotate(total=Count("id"))
-        .order_by("-total")
-    )
-    appointments_by_status = Appointment.objects.values("status").annotate(
-        total=Count("id")
-    )
-    return Response(
-        {
-            "patients_by_month": list(patients_by_month),
-            "consultations_by_doctor": list(consultations_by_doctor),
-            "appointments_by_status": list(appointments_by_status),
-            "consultations_total": Consultation.objects.count(),
-            "appointments_total": Appointment.objects.count(),
-            "prescriptions_total": Prescription.objects.count(),
-        }
-    )
 
 
 @api_view(["GET"])

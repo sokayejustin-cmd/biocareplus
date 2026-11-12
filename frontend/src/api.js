@@ -49,10 +49,20 @@ export async function api(path, { method = "GET", body, blob } = {}) {
     const err = new Error(data?.detail || "Erreur API");
     err.payload = data;
     err.status = res.status;
+    // Forme compatible axios, utilisée par certaines pages (error.response.data).
+    err.response = { data, status: res.status };
     throw err;
   }
   return data;
 }
+
+// Raccourcis de style axios : renvoient { data } comme axios.
+const withData = (promise) => promise.then((data) => ({ data }));
+api.get = (path) => withData(api(path));
+api.delete = (path) => withData(api(path, { method: "DELETE" }));
+api.post = (path, body) => withData(api(path, { method: "POST", body }));
+api.put = (path, body) => withData(api(path, { method: "PUT", body }));
+api.patch = (path, body) => withData(api(path, { method: "PATCH", body }));
 
 export function unwrap(data) {
   if (Array.isArray(data)) return data;

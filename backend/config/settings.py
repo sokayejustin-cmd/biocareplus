@@ -73,16 +73,12 @@ if os.getenv("DB_ENGINE", "sqlite") == "postgres":
         }
     }
 else:
-   DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "Biocareplus",
-        "USER": "postgres",
-        "PASSWORD": "0110",
-        "HOST": "localhost",
-        "PORT": "5432",
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
 
 AUTH_USER_MODEL = "clinic.User"
 AUTH_PASSWORD_VALIDATORS = [

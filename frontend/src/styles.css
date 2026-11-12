@@ -353,3 +353,31 @@ th { background: #f7fbfc; color: var(--muted); font-weight: 600; }
   .sidebar.open { display: flex; }
   .menu-toggle { display: inline-flex; }
 }
+
+/* ---------- Page Statistiques ---------- */
+.stats-page .muted { color: var(--muted); margin-top: 4px; }
+.stats-page .error { color: var(--danger); }
+.stats-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+.period-switch { display: inline-flex; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+.period-switch button { border: 0; background: transparent; padding: 7px 14px; border-radius: 8px; cursor: pointer; color: var(--muted); font: inherit; font-size: 14px; }
+.period-switch button.active { background: var(--navy); color: #fff; }
+.period-switch button:disabled { cursor: wait; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+.kpi span { color: var(--muted); font-size: 13px; }
+.kpi b { font-size: 28px; color: var(--navy); line-height: 1.1; }
+.kpi small { color: var(--muted); font-size: 12px; }
+.kpi-warn b { color: var(--danger); }
+.chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; transition: opacity .2s; }
+.chart-grid.is-loading { opacity: .55; }
+.chart-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); min-width: 0; }
+.chart-card.chart-wide { grid-column: 1 / -1; }
+.chart-card header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.chart-card h3 { margin: 0; font-size: 16px; color: var(--text); }
+.chart-card header span { color: var(--muted); font-size: 12px; }
+.chart-empty { height: 200px; display: grid; place-items: center; color: var(--muted); font-size: 14px; background: var(--bg); border-radius: 10px; }
+.donut-wrap { position: relative; }
+.donut-center { position: absolute; top: 0; left: 0; right: 0; height: 204px; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+.donut-center b { font-size: 24px; color: var(--navy); }
+.donut-center span { font-size: 12px; color: var(--muted); }
+@media (max-width: 900px) { .chart-grid { grid-template-columns: 1fr; } }
