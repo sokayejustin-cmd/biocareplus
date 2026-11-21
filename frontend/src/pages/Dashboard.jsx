@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import { useAuth } from "../auth.jsx";
+import { CountUp } from "../effects.jsx";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -30,14 +31,16 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1>Tableau de bord</h1>
-      <p style={{ color: "var(--muted)" }}>
-        Espace {user?.role} — {user?.first_name} {user?.last_name}
-      </p>
+      <div className="dash-hero">
+        <h1>Bonjour {user?.first_name || user?.username}</h1>
+        <p>Voici l'activité du jour — {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}</p>
+      </div>
       <div className="stats">
-        {Object.entries(stats).map(([k, v]) => (
-          <div className="stat" key={k}>
-            <b>{v}</b>
+        {Object.entries(stats).map(([k, v], i) => (
+          <div className="stat" key={k} style={{ animationDelay: `${i * 60}ms` }}>
+            <b>
+              <CountUp value={v} />
+            </b>
             <span>{labels[k] || k}</span>
           </div>
         ))}

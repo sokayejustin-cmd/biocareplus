@@ -139,14 +139,12 @@ export default function Appointments({ create }) {
         status: form.status,
       };
 
-      console.log("Données du rendez-vous envoyées :", payload);
 
       const response = await api("/appointments/", {
         method: "POST",
         body: payload,
       });
 
-      console.log("Rendez-vous créé :", response);
 
       notify("success", "Rendez-vous enregistré avec succès.");
 

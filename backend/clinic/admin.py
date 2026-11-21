@@ -5,6 +5,7 @@ from .models import (
     Consultation,
     ConsultationTicket,
     Doctor,
+    LabResult,
     MedicalComment,
     MedicalRecord,
     Nurse,
@@ -15,6 +16,7 @@ from .models import (
     Receptionist,
     Specialty,
     User,
+    WhatsAppMessage,
 )
 
 
@@ -38,3 +40,15 @@ admin.site.register(PrescriptionItem)
 admin.site.register(MedicalComment)
 admin.site.register(ConsultationTicket)
 admin.site.register(Notification)
+
+
+@admin.register(LabResult)
+class LabResultAdmin(admin.ModelAdmin):
+    list_display = ("test_name", "patient", "status", "requested_at", "available_at")
+    list_filter = ("status",)
+
+
+@admin.register(WhatsAppMessage)
+class WhatsAppMessageAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "patient", "kind", "to_number", "provider", "status")
+    list_filter = ("kind", "status", "provider")

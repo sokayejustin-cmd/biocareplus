@@ -174,9 +174,6 @@ function Tickets() {
           loadDoctors(),
         ]);
 
-      console.log("TICKETS API :", ticketsData);
-      console.log("PATIENTS API :", patientsData);
-      console.log("DOCTEURS API :", doctorsData);
 
       setTickets(ticketsData);
       setPatients(patientsData);
@@ -235,7 +232,6 @@ function Tickets() {
 
       const data = await response.json();
 
-      console.log("CREATION TICKET :", data);
 
       if (!response.ok) {
         console.error("Erreur API création ticket :", data);
@@ -303,7 +299,6 @@ function Tickets() {
 
       const data = await response.json();
 
-      console.log("MODIFICATION STATUT :", data);
 
       if (!response.ok) {
         throw new Error(

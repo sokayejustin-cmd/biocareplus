@@ -16,14 +16,17 @@ async function refreshAccess() {
 
 export async function api(path, { method = "GET", body, blob } = {}) {
   const headers = {};
-  if (!blob) headers["Content-Type"] = "application/json";
+  // FormData (envoi de fichier) : le navigateur fixe lui-même le Content-Type.
+  const isForm = body instanceof FormData;
+  if (!blob && !isForm) headers["Content-Type"] = "application/json";
+  const payload = body ? (isForm ? body : JSON.stringify(body)) : undefined;
   let token = localStorage.getItem("access");
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let res = await fetch(`${API}${path}`, {
     method,
     headers,
-    body: body ? JSON.stringify(body) : undefined,
+    body: payload,
   });
 
   if (res.status === 401 && localStorage.getItem("refresh")) {
@@ -33,7 +36,7 @@ export async function api(path, { method = "GET", body, blob } = {}) {
       res = await fetch(`${API}${path}`, {
         method,
         headers,
-        body: body ? JSON.stringify(body) : undefined,
+        body: payload,
       });
     }
   }

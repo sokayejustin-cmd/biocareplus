@@ -1,9 +1,12 @@
-from django.db.models.signals import post_save
+from django.db import transaction
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 from .models import (
     Appointment,
     Consultation,
+    LabResult,
     Notification,
     Patient,
     Prescription,
@@ -88,6 +91,57 @@ def notify_prescription(sender, instance, created, **kwargs):
             "Nouvelle ordonnance",
             f"Une ordonnance a été établie le {instance.date}.",
         )
+
+
+@receiver(pre_save, sender=LabResult)
+def remember_lab_status(sender, instance, **kwargs):
+    previous = None
+    if instance.pk:
+        previous = (
+            LabResult.objects.filter(pk=instance.pk)
+            .values_list("status", flat=True)
+            .first()
+        )
+    instance._previous_status = previous
+    if instance.status == LabResult.Status.AVAILABLE and not instance.available_at:
+        instance.available_at = timezone.now()
+
+
+@receiver(post_save, sender=LabResult)
+def notify_lab_result(sender, instance, created, **kwargs):
+    if created and instance.status != LabResult.Status.AVAILABLE:
+        notify(
+            instance.patient.user,
+            "lab_requested",
+            "Analyse prescrite",
+            f"L'analyse « {instance.test_name} » a été demandée.",
+        )
+        return
+
+    became_available = (
+        instance.status == LabResult.Status.AVAILABLE
+        and getattr(instance, "_previous_status", None) != LabResult.Status.AVAILABLE
+    )
+    if not became_available:
+        return
+
+    notify(
+        instance.patient.user,
+        "lab_available",
+        "Résultat d'analyse disponible",
+        f"Le résultat de « {instance.test_name} » est disponible dans votre espace.",
+    )
+
+    def send():
+        from .whatsapp import lab_result_text, send_whatsapp
+
+        send_whatsapp(
+            instance.patient,
+            "lab_result",
+            lab_result_text(instance),
+        )
+
+    transaction.on_commit(send)
 
 
 # keep User import used for role checks if needed later

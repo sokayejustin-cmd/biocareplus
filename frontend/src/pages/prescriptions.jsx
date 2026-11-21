@@ -312,7 +312,6 @@ export default function Prescriptions({ create = false }) {
       })),
     };
 
-    console.log("PAYLOAD ORDONNANCE :", payload);
 
     try {
       setSaving(true);

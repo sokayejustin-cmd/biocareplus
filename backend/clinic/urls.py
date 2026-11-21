@@ -18,6 +18,8 @@ router.register("prescriptions", views.PrescriptionViewSet, basename="prescripti
 router.register("comments", views.MedicalCommentViewSet, basename="comment")
 router.register("tickets", views.ConsultationTicketViewSet, basename="ticket")
 router.register("notifications", views.NotificationViewSet, basename="notification")
+router.register("lab-results", views.LabResultViewSet, basename="lab-result")
+router.register("whatsapp-messages", views.WhatsAppMessageViewSet, basename="whatsapp-message")
 
 urlpatterns = [
     path("public/clinic/", views.public_clinic),
@@ -27,6 +29,8 @@ urlpatterns = [
     path("auth/change-password/", views.change_password),
     path("auth/password-reset/", views.password_reset_request),
     path("auth/password-reset/confirm/", views.password_reset_confirm),
+    path("portal/whatsapp/", views.portal_whatsapp),
+    path("portal/whatsapp/test/", views.portal_whatsapp_test),
     path("stats/dashboard/", views.dashboard_stats),
     path("stats/analytics/", views.admin_analytics),
     path("", include(router.urls)),

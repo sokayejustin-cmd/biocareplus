@@ -96,16 +96,26 @@ export default function Patients({ create }) {
     e.preventDefault();
 
     try {
-      console.log("Données envoyées :", form);
 
       const response = await api("/patients/", {
         method: "POST",
         body: form,
       });
 
-      console.log("Patient créé :", response);
 
-      notify("success", "Patient enregistré.");
+      const wa = response?.credentials_whatsapp;
+      if (wa?.status === "sent" && wa.provider === "console") {
+        notify("error", "Patient enregistré. Mode démonstration : identifiants NON envoyés sur WhatsApp, remettez-les en main propre.");
+      } else if (wa?.status === "sent") {
+        notify("success", `Patient enregistré. Identifiants envoyés par WhatsApp au ${wa.to_number}.`);
+      } else {
+        notify(
+          "error",
+          `Patient enregistré, mais identifiants NON envoyés par WhatsApp${
+            wa?.error ? ` (${wa.error})` : ""
+          }. Remettez-les au patient en main propre.`
+        );
+      }
 
       setOpen(false);
       setForm(empty);
@@ -390,15 +400,20 @@ export default function Patients({ create }) {
 
               {/* TELEPHONE */}
               <div className="field">
-                <label>Téléphone</label>
+                <label>Téléphone (WhatsApp)</label>
 
                 <input
                   className="input"
+                  type="tel"
+                  placeholder="90 12 34 56"
                   value={form.user.phone}
                   onChange={(e) =>
                     updateUserField("phone", e.target.value)
                   }
                 />
+                <small className="muted">
+                  L'identifiant et le mot de passe sont envoyés à ce numéro par WhatsApp.
+                </small>
               </div>
 
               {/* DATE DE NAISSANCE */}

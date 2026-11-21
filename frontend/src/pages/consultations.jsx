@@ -312,7 +312,6 @@ export default function Consultations({ create = false }) {
       recommendations: form.recommendations.trim(),
     };
 
-    console.log("PAYLOAD CONSULTATION :", payload);
 
     try {
       setSaving(true);

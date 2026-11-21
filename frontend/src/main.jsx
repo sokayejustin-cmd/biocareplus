@@ -4,6 +4,10 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./auth.jsx";
 import "./styles.css";
+import { installTilt3D } from "./effects.jsx";
+
+// Cartes qui s'inclinent en 3D vers le curseur.
+installTilt3D(".feature-card, .pro-card, .stat, .kpi, .portal-tile, .login-card, .hero-stage");
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

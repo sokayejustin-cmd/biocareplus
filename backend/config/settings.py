@@ -11,6 +11,11 @@ load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
+
+if not DEBUG and SECRET_KEY in {"dev-only-secret-key", "change-me-in-production"}:
+    raise RuntimeError(
+        "DJANGO_SECRET_KEY doit être défini avec une valeur secrète en production."
+    )
 ALLOWED_HOSTS = [
     h.strip()
     for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
@@ -62,6 +67,19 @@ TEMPLATES = [
 ]
 
 if os.getenv("DB_ENGINE", "sqlite") == "postgres":
+    def _pg_options():
+        options = {"sslmode": os.getenv("POSTGRES_SSLMODE", "prefer")}
+        try:
+            import psycopg_pool  # noqa: F401
+        except ImportError:
+            return options
+        options["pool"] = {
+            "min_size": int(os.getenv("POSTGRES_POOL_MIN", "2")),
+            "max_size": int(os.getenv("POSTGRES_POOL_MAX", "10")),
+            "timeout": 10,
+        }
+        return options
+
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -70,19 +88,19 @@ if os.getenv("DB_ENGINE", "sqlite") == "postgres":
             "PASSWORD": os.getenv("POSTGRES_PASSWORD", "biocare"),
             "HOST": os.getenv("POSTGRES_HOST", "127.0.0.1"),
             "PORT": os.getenv("POSTGRES_PORT", "5432"),
+            # Pool de connexions : ouvrir une connexion PostgreSQL coûte ~75 ms
+            # sous Windows (un processus par connexion), une requête < 1 ms.
+            # Les connexions sont ouvertes une fois puis partagées entre requêtes.
+            "OPTIONS": _pg_options(),
         }
     }
 else:
-   DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "Biocareplus",
-        "USER": "postgres",
-        "PASSWORD": "0110",
-        "HOST": "localhost",
-        "PORT": "5432",
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
-}
 
 AUTH_USER_MODEL = "clinic.User"
 AUTH_PASSWORD_VALIDATORS = [
@@ -99,7 +117,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -123,8 +141,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ),
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 25,
+    "DEFAULT_PAGINATION_CLASS": "clinic.pagination.StandardPagination",
 }
 
 SIMPLE_JWT = {
@@ -138,5 +155,20 @@ DEFAULT_FROM_EMAIL = "BIO CARE PLUS <noreply@biocareplus.fr>"
 
 CLINIC_NAME = "BIO CARE PLUS"
 CLINIC_ADDRESS = "12 Avenue de la Santé, 75013 Paris"
+
+# ---------- WhatsApp (rappels de RDV, résultats d'analyse) ----------
+# console (défaut, aucun envoi réel) | twilio | meta
+WHATSAPP_PROVIDER = os.getenv("WHATSAPP_PROVIDER", "console").strip().lower()
+# Indicatif ajouté aux numéros saisis sans indicatif (228 = Togo).
+WHATSAPP_DEFAULT_COUNTRY_CODE = os.getenv("WHATSAPP_DEFAULT_COUNTRY_CODE", "228")
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
+TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "")  # ex. +14155238886
+META_WHATSAPP_TOKEN = os.getenv("META_WHATSAPP_TOKEN", "")
+META_WHATSAPP_PHONE_NUMBER_ID = os.getenv("META_WHATSAPP_PHONE_NUMBER_ID", "")
+# Lien envoyé au patient quand un résultat est disponible.
+PATIENT_PORTAL_URL = os.getenv("PATIENT_PORTAL_URL", "http://localhost:5173/app")
+# Délai avant le rendez-vous à partir duquel le rappel part.
+APPOINTMENT_REMINDER_HOURS = int(os.getenv("APPOINTMENT_REMINDER_HOURS", "24"))
 CLINIC_PHONE = "+33 1 23 45 67 89"
 CLINIC_EMAIL = "contact@biocareplus.fr"

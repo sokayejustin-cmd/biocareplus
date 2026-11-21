@@ -65,6 +65,18 @@ class IsStaffUser(BasePermission):
         )
 
 
+class IsMedicalStaff(BasePermission):
+    """Admin, doctor or nurse — those allowed to write clinical notes."""
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role
+            in {User.Role.ADMIN, User.Role.DOCTOR, User.Role.NURSE}
+        )
+
+
 class IsAdminOrReceptionist(BasePermission):
     def has_permission(self, request, view):
         return bool(

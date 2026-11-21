@@ -8,7 +8,8 @@ from django.http import FileResponse
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -18,6 +19,7 @@ from .models import (
     Consultation,
     ConsultationTicket,
     Doctor,
+    LabResult,
     MedicalComment,
     MedicalRecord,
     Nurse,
@@ -28,12 +30,15 @@ from .models import (
     Receptionist,
     Specialty,
     User,
+    WhatsAppMessage,
 )
 from .pdfs import build_prescription_pdf, build_ticket_pdf
 from .permissions import (
     IsAdmin,
     IsAdminOrReceptionist,
     IsDoctor,
+    IsMedicalStaff,
+    IsPatient,
     IsStaffUser,
 )
 from .serializers import (
@@ -43,6 +48,7 @@ from .serializers import (
     ConsultationSerializer,
     ConsultationTicketSerializer,
     DoctorSerializer,
+    LabResultSerializer,
     MeSerializer,
     MedicalCommentSerializer,
     MedicalRecordSerializer,
@@ -51,10 +57,12 @@ from .serializers import (
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     PatientSerializer,
+    PatientWhatsAppSerializer,
     PrescriptionSerializer,
     ReceptionistSerializer,
     SpecialtySerializer,
     UserSerializer,
+    WhatsAppMessageSerializer,
     decode_reset_user,
     encode_reset,
 )
@@ -128,6 +136,8 @@ def password_reset_confirm(request):
             {"detail": "Lien invalide ou expiré."}, status=status.HTTP_400_BAD_REQUEST
         )
     user.set_password(serializer.validated_data["new_password"])
+    # Le mot de passe vient d'être choisi par l'utilisateur lui-même.
+    user.must_change_password = False
     user.save()
     return Response({"detail": "Mot de passe réinitialisé."})
 
@@ -373,6 +383,29 @@ class PatientViewSet(viewsets.ModelViewSet):
         context["request"] = self.request
         return context
 
+    def perform_create(self, serializer):
+        from .whatsapp import send_credentials
+
+        # Le mot de passe en clair n'existe qu'ici : on l'envoie avant qu'il soit haché.
+        password = (serializer.validated_data.get("user") or {}).get("password")
+        patient = serializer.save()
+        self._credentials_log = send_credentials(patient, password) if password else None
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        log = getattr(self, "_credentials_log", None)
+        response.data["credentials_whatsapp"] = (
+            {
+                "status": log.status,
+                "provider": log.provider,
+                "to_number": log.to_number,
+                "error": log.error,
+            }
+            if log
+            else None
+        )
+        return response
+
 
 class MedicalRecordViewSet(viewsets.ModelViewSet):
     serializer_class = MedicalRecordSerializer
@@ -380,7 +413,7 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         patients = _patient_scope(self.request.user)
-        qs = MedicalRecord.objects.filter(patient__in=patients).select_related("patient__user")
+        qs = MedicalRecord.objects.filter(patient__in=patients).select_related("patient__user").order_by("-id")
         if self.request.user.role == User.Role.RECEPTIONIST:
             # Reception sees administrative identity, not full clinical notes in list —
             # still allowed to open the dossier as specified.
@@ -394,6 +427,12 @@ class MedicalRecordViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated()]
         return [IsDoctor()]
 
+    def perform_create(self, serializer):
+        patient = serializer.validated_data.get("patient")
+        if not _patient_scope(self.request.user).filter(pk=patient.pk).exists():
+            raise PermissionDenied("Ce patient n'est pas accessible avec votre compte.")
+        serializer.save()
+
 
 class AppointmentViewSet(viewsets.ModelViewSet):
     serializer_class = AppointmentSerializer
@@ -403,7 +442,13 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         "patient__patient_code",
         "reason",
     )
-    filterset_fields = ("date", "doctor", "patient", "status", "specialty")
+    filterset_fields = {
+        "date": ["exact", "gte", "lte"],
+        "doctor": ["exact"],
+        "patient": ["exact"],
+        "status": ["exact"],
+        "specialty": ["exact"],
+    }
 
     def get_queryset(self):
         user = self.request.user
@@ -433,6 +478,20 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         }:
             return [IsAuthenticated()]
         return [IsAdminOrReceptionist()]
+
+    @action(detail=True, methods=["post"])
+    def remind(self, request, pk=None):
+        """Envoie immédiatement le rappel WhatsApp de ce rendez-vous."""
+        from .whatsapp import send_appointment_reminder
+
+        appointment = self.get_object()
+        if appointment.status not in (
+            Appointment.Status.SCHEDULED,
+            Appointment.Status.CONFIRMED,
+        ):
+            raise ValidationError("Seul un rendez-vous à venir peut faire l'objet d'un rappel.")
+        log = send_appointment_reminder(appointment)
+        return Response(WhatsAppMessageSerializer(log).data)
 
 
 class ConsultationViewSet(viewsets.ModelViewSet):
@@ -532,7 +591,16 @@ class MedicalCommentViewSet(viewsets.ModelViewSet):
             "author", "patient"
         )
 
+    def get_permissions(self):
+        if self.request.method in ("GET", "HEAD"):
+            return [IsAuthenticated()]
+        # Seuls les soignants rédigent des commentaires médicaux.
+        return [IsMedicalStaff()]
+
     def perform_create(self, serializer):
+        patient = serializer.validated_data.get("patient")
+        if not _patient_scope(self.request.user).filter(pk=patient.pk).exists():
+            raise PermissionDenied("Ce patient n'est pas accessible avec votre compte.")
         kind = MedicalComment.Kind.NURSE
         if self.request.user.role == User.Role.DOCTOR:
             kind = MedicalComment.Kind.DOCTOR
@@ -576,7 +644,7 @@ class ConsultationTicketViewSet(viewsets.ModelViewSet):
 
         numero = f"BC-{today}-{count:04d}"
 
-        serializer.save(numero=numero)
+        serializer.save(numero=numero, heure=timezone.localtime().time().replace(microsecond=0))
 
     @action(detail=True, methods=["get"])
     def pdf(self, request, pk=None):
@@ -590,6 +658,112 @@ class ConsultationTicketViewSet(viewsets.ModelViewSet):
             filename=f"bon-{ticket.numero}.pdf",
             content_type="application/pdf",
         )
+
+class LabResultViewSet(viewsets.ModelViewSet):
+    serializer_class = LabResultSerializer
+    parser_classes = (JSONParser, MultiPartParser, FormParser)
+    search_fields = (
+        "test_name",
+        "patient__user__first_name",
+        "patient__user__last_name",
+        "patient__patient_code",
+    )
+    filterset_fields = ("patient", "status", "doctor")
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = LabResult.objects.select_related("patient__user", "doctor__user")
+        # Les réceptionnistes n'ont pas accès aux résultats médicaux.
+        if user.role == User.Role.RECEPTIONIST:
+            return qs.none()
+        return qs.filter(patient__in=_patient_scope(user))
+
+    def get_permissions(self):
+        if self.request.method in ("GET", "HEAD"):
+            return [IsAuthenticated()]
+        return [IsMedicalStaff()]
+
+    def perform_create(self, serializer):
+        patient = serializer.validated_data["patient"]
+        if not _patient_scope(self.request.user).filter(pk=patient.pk).exists():
+            raise PermissionDenied("Ce patient n'est pas accessible avec votre compte.")
+        doctor = serializer.validated_data.get("doctor")
+        if self.request.user.role == User.Role.DOCTOR:
+            doctor = self.request.user.doctor_profile
+        serializer.save(doctor=doctor, created_by=self.request.user)
+
+    @action(detail=True, methods=["get"])
+    def download(self, request, pk=None):
+        result = self.get_object()
+        if not result.file:
+            raise ValidationError("Aucun fichier joint à ce résultat.")
+        if (
+            request.user.role == User.Role.PATIENT
+            and result.status != LabResult.Status.AVAILABLE
+        ):
+            raise PermissionDenied("Ce résultat n'est pas encore disponible.")
+        return FileResponse(
+            result.file.open("rb"),
+            as_attachment=True,
+            filename=result.file.name.rsplit("/", 1)[-1],
+        )
+
+
+class WhatsAppMessageViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = WhatsAppMessageSerializer
+    filterset_fields = ("patient", "kind", "status")
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = WhatsAppMessage.objects.select_related("patient__user")
+        if user.role == User.Role.ADMIN:
+            return qs
+        if user.role == User.Role.PATIENT:
+            return qs.filter(patient__user=user)
+        return qs.none()
+
+    @action(detail=False, methods=["post"], url_path="run-reminders",
+            permission_classes=[IsAdmin])
+    def run_reminders(self, request):
+        """Lance immédiatement l'envoi des rappels dus (comme la commande planifiée)."""
+        from .management.commands.send_appointment_reminders import due_appointments
+        from .whatsapp import send_appointment_reminder
+
+        logs = [send_appointment_reminder(a) for a in due_appointments()]
+        sent = sum(1 for log in logs if log.status == WhatsAppMessage.Status.SENT)
+        return Response({"processed": len(logs), "sent": sent})
+
+
+def _own_patient(user):
+    patient = getattr(user, "patient_profile", None)
+    if patient is None:
+        raise PermissionDenied("Aucun dossier patient n'est associé à ce compte.")
+    return patient
+
+
+@api_view(["GET", "PATCH"])
+@permission_classes([IsPatient])
+def portal_whatsapp(request):
+    """Préférences WhatsApp du patient connecté."""
+    patient = _own_patient(request.user)
+    if request.method == "PATCH":
+        serializer = PatientWhatsAppSerializer(patient, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+    return Response(PatientWhatsAppSerializer(patient).data)
+
+
+@api_view(["POST"])
+@permission_classes([IsPatient])
+def portal_whatsapp_test(request):
+    """Envoie un message de test au patient connecté."""
+    from .whatsapp import send_whatsapp, test_text
+
+    patient = _own_patient(request.user)
+    log = send_whatsapp(patient, WhatsAppMessage.Kind.TEST, test_text(patient))
+    return Response(WhatsAppMessageSerializer(log).data)
+
 
 class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = NotificationSerializer
@@ -627,7 +801,9 @@ def dashboard_stats(request):
         }
         return Response(data)
     if user.role == User.Role.DOCTOR:
-        doctor = user.doctor_profile
+        doctor = getattr(user, "doctor_profile", None)
+        if doctor is None:
+            return Response({})
         return Response(
             {
                 "my_appointments_today": Appointment.objects.filter(

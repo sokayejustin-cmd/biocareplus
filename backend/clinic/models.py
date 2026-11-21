@@ -91,6 +91,15 @@ class Patient(models.Model):
     address = models.CharField(max_length=255, blank=True)
     emergency_contact_name = models.CharField(max_length=150, blank=True)
     emergency_contact_phone = models.CharField(max_length=30, blank=True)
+    whatsapp_opt_in = models.BooleanField(
+        default=False,
+        help_text="Le patient accepte de recevoir des messages WhatsApp.",
+    )
+    whatsapp_number = models.CharField(
+        max_length=30,
+        blank=True,
+        help_text="Numéro WhatsApp au format international. Vide = téléphone du compte.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -98,6 +107,10 @@ class Patient(models.Model):
 
     def __str__(self):
         return f"{self.patient_code} — {self.user.get_full_name()}"
+
+    @property
+    def whatsapp_target(self):
+        return (self.whatsapp_number or self.user.phone or "").strip()
 
 
 class MedicalRecord(models.Model):
@@ -134,6 +147,7 @@ class Appointment(models.Model):
     status = models.CharField(
         max_length=20, choices=Status.choices, default=Status.SCHEDULED
     )
+    reminder_sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -296,6 +310,74 @@ class Notification(models.Model):
     message = models.TextField()
     event = models.CharField(max_length=40)
     is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+class LabResult(models.Model):
+    class Status(models.TextChoices):
+        REQUESTED = "requested", "Demandée"
+        IN_PROGRESS = "in_progress", "En cours d'analyse"
+        AVAILABLE = "available", "Résultat disponible"
+
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, related_name="lab_results"
+    )
+    doctor = models.ForeignKey(
+        Doctor,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="lab_results",
+    )
+    test_name = models.CharField(max_length=200)
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.REQUESTED
+    )
+    result_summary = models.TextField(blank=True)
+    file = models.FileField(upload_to="lab_results/%Y/%m/", blank=True)
+    requested_at = models.DateField(default=timezone.localdate)
+    available_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-requested_at", "-created_at"]
+
+    def __str__(self):
+        return f"{self.test_name} — {self.patient}"
+
+
+class WhatsAppMessage(models.Model):
+    class Kind(models.TextChoices):
+        APPOINTMENT_REMINDER = "appointment_reminder", "Rappel de rendez-vous"
+        LAB_RESULT = "lab_result", "Résultat d'analyse"
+        CREDENTIALS = "credentials", "Identifiants de connexion"
+        TEST = "test", "Message de test"
+
+    class Status(models.TextChoices):
+        SENT = "sent", "Envoyé"
+        FAILED = "failed", "Échec"
+        SKIPPED = "skipped", "Non envoyé"
+
+    patient = models.ForeignKey(
+        Patient, on_delete=models.CASCADE, related_name="whatsapp_messages"
+    )
+    kind = models.CharField(max_length=30, choices=Kind.choices)
+    to_number = models.CharField(max_length=30, blank=True)
+    body = models.TextField()
+    provider = models.CharField(max_length=20)
+    status = models.CharField(max_length=10, choices=Status.choices)
+    provider_message_id = models.CharField(max_length=120, blank=True)
+    error = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
