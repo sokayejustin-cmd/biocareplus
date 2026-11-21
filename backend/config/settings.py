@@ -3,6 +3,7 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 
 from dotenv import load_dotenv
 
@@ -38,6 +39,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # Sert les fichiers statiques (admin Django) en production.
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -65,6 +68,17 @@ TEMPLATES = [
         },
     }
 ]
+
+# Hébergeurs (Render…) : toute la connexion est fournie dans DATABASE_URL.
+_DATABASE_URL = os.getenv("DATABASE_URL", "")
+if _DATABASE_URL:
+    _db = urlparse(_DATABASE_URL)
+    os.environ.setdefault("DB_ENGINE", "postgres")
+    os.environ["POSTGRES_DB"] = unquote(_db.path.lstrip("/"))
+    os.environ["POSTGRES_USER"] = unquote(_db.username or "")
+    os.environ["POSTGRES_PASSWORD"] = unquote(_db.password or "")
+    os.environ["POSTGRES_HOST"] = _db.hostname or ""
+    os.environ["POSTGRES_PORT"] = str(_db.port or 5432)
 
 if os.getenv("DB_ENGINE", "sqlite") == "postgres":
     def _pg_options():
@@ -117,6 +131,16 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if DEBUG
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        )
+    },
+}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -128,6 +152,16 @@ CORS_ALLOWED_ORIGINS = [
     ).split(",")
     if o.strip()
 ]
+
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o.strip()
+]
+
+if not DEBUG:
+    # Derrière le proxy HTTPS de l'hébergeur.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (

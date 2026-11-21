@@ -24,3 +24,6 @@ Thumbs.db
 backend/media/
 backend/staticfiles/
 *.log
+
+# URL secrète de la base Render (copie des données)
+backend/.render-db-url

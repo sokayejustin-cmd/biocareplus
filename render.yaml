@@ -1,0 +1,44 @@
+# Déploiement du backend Django + PostgreSQL sur Render (Blueprint).
+# Render > New > Blueprint > choisir ce dépôt GitHub.
+databases:
+  - name: biocareplus-db
+    plan: free
+    databaseName: biocareplus
+    user: biocare
+    region: frankfurt
+
+services:
+  - type: web
+    name: biocareplus-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: python manage.py migrate --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    healthCheckPath: /api/public/clinic/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DATABASE_URL
+        fromDatabase:
+          name: biocareplus-db
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: .onrender.com
+      - key: CORS_ORIGINS
+        value: https://biocareplus.vercel.app
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://biocareplus.vercel.app,https://*.onrender.com
+      - key: POSTGRES_POOL_MAX
+        value: "5"
+      - key: WHATSAPP_PROVIDER
+        value: console
+      - key: WHATSAPP_DEFAULT_COUNTRY_CODE
+        value: "228"
+      - key: PATIENT_PORTAL_URL
+        value: https://biocareplus.vercel.app/app
