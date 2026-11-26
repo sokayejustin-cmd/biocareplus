@@ -68,10 +68,10 @@ export default function AmbientBackground() {
       <svg className="ambient-ecg" viewBox="0 0 1200 120" preserveAspectRatio="none">
         <defs>
           <linearGradient id="ambient-ecg-g" x1="0" x2="1">
-            <stop offset="0" stopColor="#0b5f8a" stopOpacity="0" />
-            <stop offset=".3" stopColor="#0b5f8a" />
-            <stop offset=".7" stopColor="#1b8a6b" />
-            <stop offset="1" stopColor="#1b8a6b" stopOpacity="0" />
+            <stop offset="0" stopColor="#1e7b34" stopOpacity="0" />
+            <stop offset=".3" stopColor="#1e7b34" />
+            <stop offset=".7" stopColor="#3aa935" />
+            <stop offset="1" stopColor="#3aa935" stopOpacity="0" />
           </linearGradient>
         </defs>
         <path

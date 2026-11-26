@@ -29,9 +29,8 @@ export default function Login() {
       <div className="login-blob blob-b" aria-hidden="true" />
       <div className="login-blob blob-c" aria-hidden="true" />
       <form className="card login-card" onSubmit={onSubmit}>
-        <Link to="/" className="brand" style={{ marginBottom: 12 }}>
-          <img src="/logo.svg" alt="" />
-          BIO CARE PLUS
+        <Link to="/" className="login-logo" aria-label="BIO CARE PLUS — accueil">
+          <img src="/logo-full.png" alt="BIO CARE PLUS — Au cœur de votre santé" width="150" height="147" />
         </Link>
         <h2>Connexion</h2>
         <p className="muted login-sub">Accédez à votre espace sécurisé.</p>

@@ -76,7 +76,7 @@ export default function Home() {
     <div className="home">
       <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
         <div className="brand">
-          <img src="/logo.svg" alt="" />
+          <img src="/logo-mark.png" alt="" width="42" height="42" />
           BIO CARE PLUS
         </div>
         <Link className="btn" to="/login">
@@ -120,13 +120,13 @@ export default function Home() {
             <svg viewBox="0 0 400 260" role="img" aria-label="Illustration médicale">
               <defs>
                 <linearGradient id="hero-g" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stopColor="#0b5f8a" />
-                  <stop offset="1" stopColor="#1b8a6b" />
+                  <stop offset="0" stopColor="#1e7b34" />
+                  <stop offset="1" stopColor="#3aa935" />
                 </linearGradient>
               </defs>
-              <rect width="400" height="260" rx="18" fill="#eef7fb" />
-              <circle className="pulse-ring" cx="200" cy="118" r="54" fill="none" stroke="#1b8a6b" strokeWidth="3" />
-              <circle className="pulse-ring delay" cx="200" cy="118" r="54" fill="none" stroke="#0b5f8a" strokeWidth="2" />
+              <rect width="400" height="260" rx="18" fill="#eef8ea" />
+              <circle className="pulse-ring" cx="200" cy="118" r="54" fill="none" stroke="#3aa935" strokeWidth="3" />
+              <circle className="pulse-ring delay" cx="200" cy="118" r="54" fill="none" stroke="#1e7b34" strokeWidth="2" />
               <circle cx="200" cy="118" r="54" fill="url(#hero-g)" />
               <rect x="186" y="78" width="28" height="80" rx="6" fill="#fff" />
               <rect x="160" y="104" width="80" height="28" rx="6" fill="#fff" />
@@ -134,7 +134,7 @@ export default function Home() {
                 className="ecg"
                 points="30,214 120,214 140,214 152,190 164,236 176,200 188,214 370,214"
                 fill="none"
-                stroke="#1b8a6b"
+                stroke="#3aa935"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"

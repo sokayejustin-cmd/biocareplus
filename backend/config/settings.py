@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
+# Exécution en fonction serverless sur Vercel (variable fournie par Vercel).
+ON_VERCEL = bool(os.getenv("VERCEL"))
+
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 
@@ -82,7 +85,11 @@ if _DATABASE_URL:
 
 if os.getenv("DB_ENGINE", "sqlite") == "postgres":
     def _pg_options():
-        options = {"sslmode": os.getenv("POSTGRES_SSLMODE", "prefer")}
+        options = {"sslmode": os.getenv("POSTGRES_SSLMODE", "require" if ON_VERCEL else "prefer")}
+        # En serverless, chaque instance est éphémère : pas de pool côté Django
+        # (Neon fournit déjà un pooler côté serveur).
+        if ON_VERCEL or os.getenv("POSTGRES_POOL", "1") == "0":
+            return options
         try:
             import psycopg_pool  # noqa: F401
         except ImportError:
@@ -106,6 +113,8 @@ if os.getenv("DB_ENGINE", "sqlite") == "postgres":
             # sous Windows (un processus par connexion), une requête < 1 ms.
             # Les connexions sont ouvertes une fois puis partagées entre requêtes.
             "OPTIONS": _pg_options(),
+            # Compatible avec le pooler PgBouncer de Neon (mode transaction).
+            "DISABLE_SERVER_SIDE_CURSORS": ON_VERCEL,
         }
     }
 else:
@@ -136,13 +145,14 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": (
             "django.contrib.staticfiles.storage.StaticFilesStorage"
-            if DEBUG
+            if DEBUG or ON_VERCEL
             else "whitenoise.storage.CompressedManifestStaticFilesStorage"
         )
     },
 }
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# Sur Vercel seul /tmp est inscriptible (fichiers non conservés entre instances).
+MEDIA_ROOT = Path("/tmp/media") if ON_VERCEL else BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = [

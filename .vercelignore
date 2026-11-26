@@ -1,0 +1,10 @@
+backend/
+render.yaml
+docker-compose.yml
+**/.env
+**/.env.local
+**/*.sqlite3
+**/*.sqlite3.*
+frontend/node_modules/
+frontend/dist/
+frontend/public/_shot.html

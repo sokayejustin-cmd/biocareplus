@@ -1311,7 +1311,7 @@ function Tickets() {
         }
 
         .ticket-form select:focus {
-          border-color: #2563eb;
+          border-color: #1e7b34;
         }
 
         .field-warning {
@@ -1397,7 +1397,7 @@ function Tickets() {
           width: 35px;
           height: 35px;
           border: 4px solid #e5e7eb;
-          border-top-color: #2563eb;
+          border-top-color: #1e7b34;
           border-radius: 50%;
           animation: ticket-spin 0.8s linear infinite;
           margin-bottom: 15px;
@@ -1484,8 +1484,8 @@ function Tickets() {
         }
 
         .ticket-status.progress {
-          background: #eff6ff;
-          color: #1d4ed8;
+          background: #eef7ea;
+          color: #165f28;
         }
 
         .ticket-status.done {

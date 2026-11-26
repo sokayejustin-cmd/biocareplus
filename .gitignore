@@ -27,3 +27,6 @@ backend/staticfiles/
 
 # URL secrète de la base Render (copie des données)
 backend/.render-db-url
+backend/.neon-db-url
+
+.vercel

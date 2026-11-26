@@ -1,0 +1,12 @@
+# Jamais envoyés à Vercel : secrets locaux, bases locales, fichiers patients.
+.env
+.render-db-url
+*.sqlite3
+*.sqlite3.*
+media/
+staticfiles/
+__pycache__/
+*.pyc
+.env.local
+.vercel/
+.neon-db-url

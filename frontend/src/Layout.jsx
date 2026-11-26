@@ -174,7 +174,7 @@ export default function Layout() {
     <div className="shell">
       <aside className={`sidebar ${open ? "open" : ""}`}>
         <div className="brand" style={{ color: "#fff", marginBottom: 16 }}>
-          <img src="/logo.svg" alt="" />
+          <img src="/logo-mark.png" alt="" width="42" height="42" />
           BIO CARE PLUS
         </div>
         {items.map(([label, to]) => (

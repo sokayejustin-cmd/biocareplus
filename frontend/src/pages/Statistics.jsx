@@ -17,13 +17,13 @@ import {
 import { api } from "../api.js";
 
 const COLORS = {
-  navy: "#0b5f8a",
-  green: "#1b8a6b",
+  navy: "#1e7b34",
+  green: "#3aa935",
   orange: "#d68910",
   purple: "#7b5ea7",
   red: "#c0392b",
-  sky: "#4fa3d1",
-  grey: "#9aabb5",
+  sky: "#8cc63f",
+  grey: "#9aae9e",
 };
 
 const SERIES = [
@@ -190,7 +190,7 @@ export default function Statistics() {
                   </linearGradient>
                 ))}
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e3ebf0" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e3ede0" vertical={false} />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
               <Tooltip />
@@ -221,7 +221,7 @@ export default function Statistics() {
         <ChartCard title="Rendez-vous par spécialité" subtitle="hors annulés" empty={!data.appointments_by_specialty.length}>
           <ResponsiveContainer width="100%" height={Math.max(240, data.appointments_by_specialty.length * 38)}>
             <BarChart data={data.appointments_by_specialty} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e3ebf0" horizontal={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e3ede0" horizontal={false} />
               <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
               <YAxis type="category" dataKey="specialty" width={130} tick={{ fontSize: 12 }} />
               <Tooltip />
@@ -233,7 +233,7 @@ export default function Statistics() {
         <ChartCard title="Consultations par docteur" subtitle="top 10" empty={!data.consultations_by_doctor.length}>
           <ResponsiveContainer width="100%" height={Math.max(240, data.consultations_by_doctor.length * 38)}>
             <BarChart data={data.consultations_by_doctor} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e3ebf0" horizontal={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e3ede0" horizontal={false} />
               <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
               <YAxis type="category" dataKey="doctor" width={130} tick={{ fontSize: 12 }} />
               <Tooltip />
@@ -245,7 +245,7 @@ export default function Statistics() {
         <ChartCard title="Affluence par jour de la semaine" empty={sum(data.appointments_by_weekday) === 0}>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={data.appointments_by_weekday} margin={{ left: -16, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e3ebf0" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e3ede0" vertical={false} />
               <XAxis dataKey="day" tick={{ fontSize: 12 }} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
               <Tooltip />
@@ -265,7 +265,7 @@ export default function Statistics() {
         >
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={data.patients_by_age} margin={{ left: -16, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e3ebf0" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e3ede0" vertical={false} />
               <XAxis dataKey="range" tick={{ fontSize: 12 }} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
               <Tooltip />
@@ -277,7 +277,7 @@ export default function Statistics() {
         <ChartCard title="Médicaments les plus prescrits" subtitle="top 8" empty={!data.top_medications.length}>
           <ResponsiveContainer width="100%" height={Math.max(240, data.top_medications.length * 34)}>
             <BarChart data={data.top_medications} layout="vertical" margin={{ left: 10, right: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e3ebf0" horizontal={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e3ede0" horizontal={false} />
               <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
               <YAxis type="category" dataKey="medication" width={150} tick={{ fontSize: 12 }} />
               <Tooltip />
@@ -293,7 +293,7 @@ export default function Statistics() {
         <ChartCard wide title="Personnel actif" subtitle={`${data.users_total} comptes utilisateurs`}>
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={staff} margin={{ left: -16, right: 10 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e3ebf0" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e3ede0" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 12 }} tickLine={false} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
               <Tooltip />
